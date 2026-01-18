@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "amazon-cognito-identity-js": "^6.3.16",
     "next": "16.1.2",
     "react": "19.2.3",
     "react-dom": "19.2.3"

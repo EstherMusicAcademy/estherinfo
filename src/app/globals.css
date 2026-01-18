@@ -1,26 +1,62 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Light theme (운영 화면 기본) */
+  --background: #f7f8fa;
+  --foreground: #111827;
+  --surface: #ffffff;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+
+  /* Brand tokens (공통) */
+  --primary: #4c9c64;
+  --primary-hover: #448c5a;
+  --accent: #54ac6e;
+}
+
+/* 사용자 선택: light/dark (data-theme가 있으면 시스템보다 우선) */
+:root[data-theme="light"] {
+  --background: #f7f8fa;
+  --foreground: #111827;
+  --surface: #ffffff;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+}
+
+:root[data-theme="dark"] {
+  --background: #000000;
+  --foreground: #bcbcbc;
+  --surface: #121212;
+  --muted: #969696;
+  --border: #2a2a2a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-accent: var(--accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme]) {
+    /* Dark theme (브랜딩 강조용) */
+    --background: #000000;
+    --foreground: #bcbcbc;
+    --surface: #121212;
+    --muted: #969696;
+    --border: #2a2a2a;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", Roboto,
+    "Noto Sans KR", Arial, Helvetica, sans-serif;
 }
