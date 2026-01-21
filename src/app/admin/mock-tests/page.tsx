@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import Image from "next/image";
 import { useRole } from "@/components/role/RoleProvider";
 import { extractYouTubeId } from "@/lib/youtube";
 import { IconWarning } from "@/components/icons/UiIcons";
@@ -523,10 +524,12 @@ export default function MockTestsPage() {
                                   onClick={() => setSelectedVideo(mt)}
                                   className="group relative aspect-video w-full overflow-hidden"
                                 >
-                                  <img
+                                  <Image
                                     src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
                                     alt={mt.songTitle}
-                                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, 33vw"
+                                    className="object-cover transition-transform group-hover:scale-105"
                                   />
                                   <div className="absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity group-hover:bg-black/50">
                                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 transition-transform group-hover:scale-110">

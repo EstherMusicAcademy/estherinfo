@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRole } from "@/components/role/RoleProvider";
 
 export default function ProfileSettingsPage() {
-  const { role, teacherId, teacherName } = useRole();
+  const { role, teacherName } = useRole();
   
   // 폼 상태
   const [form, setForm] = useState({

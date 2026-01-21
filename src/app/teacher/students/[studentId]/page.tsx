@@ -26,7 +26,7 @@ export default function TeacherStudentDetailPage() {
   const teacherId = useMemo(() => {
     if (typeof window === "undefined") return "";
     return new URLSearchParams(window.location.search).get("teacherId") ?? ctxTeacherId ?? "";
-  }, []);
+  }, [ctxTeacherId]);
 
   const [student, setStudent] = useState<Student | null>(null);
   const [subjects, setSubjects] = useState<Subject[]>([]);

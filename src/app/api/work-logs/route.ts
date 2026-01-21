@@ -1,40 +1,48 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listWorkLogs, createWorkLog } from "@/lib/workLogStore";
+import { withAuthDev, type AuthenticatedUser } from "@/lib/apiAuth";
+import { handleApiError, ApiError } from "@/lib/apiError";
+import { createWorkLogInputSchema } from "@/lib/schemas";
 
-export async function GET(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const startDate = searchParams.get("startDate") || undefined;
-    const endDate = searchParams.get("endDate") || undefined;
-    
-    const workLogs = listWorkLogs({ startDate, endDate });
-    
-    return NextResponse.json({ workLogs });
-  } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : "조회 실패" }, { status: 500 });
-  }
-}
+export const GET = withAuthDev(
+  async (req: Request) => {
+    try {
+      const { searchParams } = new URL(req.url);
+      const startDate = searchParams.get("startDate") || undefined;
+      const endDate = searchParams.get("endDate") || undefined;
 
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const { teacherId, teacherName, date, schedule, notes, students } = body;
-    
-    if (!teacherId || !teacherName || !date) {
-      return NextResponse.json({ error: "필수 필드 누락" }, { status: 400 });
+      const workLogs = listWorkLogs({ startDate, endDate });
+      return NextResponse.json({ workLogs });
+    } catch (error) {
+      return handleApiError(error);
     }
-    
-    const workLog = createWorkLog({
-      teacherId,
-      teacherName,
-      date,
-      schedule: schedule || "",
-      notes: notes || "",
-      students: students || [],
-    });
-    
-    return NextResponse.json({ workLog }, { status: 201 });
-  } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : "생성 실패" }, { status: 500 });
-  }
-}
+  },
+  { allowedRoles: ["admin", "teacher"] }
+);
+
+export const POST = withAuthDev(
+  async (req: Request, _user: AuthenticatedUser) => {
+    try {
+      const body = await req.json();
+      const parsed = createWorkLogInputSchema.safeParse(body);
+
+      if (!parsed.success) {
+        throw ApiError.validation(parsed.error.issues[0]?.message || "필수 필드 누락");
+      }
+
+      const workLog = createWorkLog({
+        teacherId: parsed.data.teacherId,
+        teacherName: parsed.data.teacherName,
+        date: parsed.data.date,
+        schedule: parsed.data.schedule || "",
+        notes: parsed.data.notes || "",
+        students: parsed.data.students || [],
+      });
+
+      return NextResponse.json({ workLog }, { status: 201 });
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+  { allowedRoles: ["admin", "teacher"] }
+);

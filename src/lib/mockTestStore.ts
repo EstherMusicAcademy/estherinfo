@@ -85,7 +85,7 @@ function seed(): Store {
   return { groups, mockTests };
 }
 
-let store: Store = seed();
+const store: Store = seed();
 
 export const mockTestStore = {
   // Groups

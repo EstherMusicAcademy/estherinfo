@@ -6,86 +6,95 @@ import {
   getSettings,
   updateSettings,
 } from "@/lib/practiceRoomStore";
+import { withAuthDev, extractAuthFromRequest, requireRole, authErrorResponse, type AuthenticatedUser } from "@/lib/apiAuth";
+import { handleApiError, ApiError } from "@/lib/apiError";
+import { z } from "zod";
 
-// GET: 연습실 목록 조회 또는 설정만 조회
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const includeInactive = searchParams.get("includeInactive") === "true";
-  const type = searchParams.get("type");
-  
-  // 설정만 조회
-  if (type === "settings") {
-    const settings = getSettings();
-    return NextResponse.json({ settings });
-  }
-  
-  const rooms = includeInactive ? listAllRooms() : listRooms();
-  const settings = getSettings();
-  
-  return NextResponse.json({ rooms, settings });
-}
+const createRoomSchema = z.object({
+  name: z.string().min(1, "연습실 이름을 입력해주세요."),
+  description: z.string().optional(),
+  roomType: z.enum(["general", "vocal", "piano", "drum"]).default("general"),
+  capacity: z.number().int().positive().default(1),
+});
 
-// POST: 새 연습실 생성 (관리자 전용)
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const { name, description, roomType, capacity, role } = body;
-    
-    // 역할 검증
-    if (role !== "admin" && role !== "master") {
-      return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
-    }
-    
-    if (!name?.trim()) {
-      return NextResponse.json({ error: "연습실 이름을 입력해주세요." }, { status: 400 });
-    }
-    
-    const room = createRoom({ 
-      name: name.trim(), 
-      description: description?.trim(),
-      roomType: roomType || "general",
-      capacity: capacity || 1,
-    });
-    return NextResponse.json(room, { status: 201 });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "연습실 생성에 실패했습니다.";
-    return NextResponse.json({ error: message }, { status: 400 });
-  }
-}
+export const GET = withAuthDev(
+  async (request: Request) => {
+    try {
+      const { searchParams } = new URL(request.url);
+      const includeInactive = searchParams.get("includeInactive") === "true";
+      const type = searchParams.get("type");
 
-// PUT: 설정 업데이트 (관리자 전용)
-export async function PUT(request: Request) {
-  try {
-    const body = await request.json();
-    const { type, settings: newSettings } = body;
-    
-    if (type !== "settings") {
-      return NextResponse.json({ error: "잘못된 요청입니다." }, { status: 400 });
-    }
-    
-    const settings = updateSettings(newSettings);
-    return NextResponse.json({ settings });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "설정 업데이트에 실패했습니다.";
-    return NextResponse.json({ error: message }, { status: 400 });
-  }
-}
+      if (type === "settings") {
+        const settings = getSettings();
+        return NextResponse.json({ settings });
+      }
 
-// PATCH: 설정 업데이트 (관리자 전용) - 이전 버전 호환
-export async function PATCH(request: Request) {
-  try {
-    const body = await request.json();
-    const { role, settings: newSettings } = body;
-    
-    // 역할 검증
-    if (role !== "admin" && role !== "master") {
-      return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
+      const rooms = includeInactive ? listAllRooms() : listRooms();
+      const settings = getSettings();
+
+      return NextResponse.json({ rooms, settings });
+    } catch (error) {
+      return handleApiError(error);
     }
-    
-    const settings = updateSettings(newSettings);
-    return NextResponse.json(settings);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "설정 업데이트에 실패했습니다.";
-    return NextResponse.json({ error: message }, { status: 400 });
-  }
-}
+  },
+  { allowedRoles: ["admin", "teacher", "student"] }
+);
+
+export const POST = withAuthDev(
+  async (request: Request, _user: AuthenticatedUser) => {
+    try {
+      const body = await request.json();
+      const parsed = createRoomSchema.safeParse(body);
+
+      if (!parsed.success) {
+        throw ApiError.validation(parsed.error.issues[0]?.message || "입력값이 올바르지 않습니다.");
+      }
+
+      const room = createRoom({
+        name: parsed.data.name.trim(),
+        description: parsed.data.description?.trim(),
+        roomType: parsed.data.roomType,
+        capacity: parsed.data.capacity,
+      });
+
+      return NextResponse.json(room, { status: 201 });
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+  { allowedRoles: ["admin"] }
+);
+
+export const PUT = withAuthDev(
+  async (request: Request, _user: AuthenticatedUser) => {
+    try {
+      const body = await request.json();
+      const { type, settings: newSettings } = body;
+
+      if (type !== "settings") {
+        throw ApiError.badRequest("잘못된 요청입니다.");
+      }
+
+      const settings = updateSettings(newSettings);
+      return NextResponse.json({ settings });
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+  { allowedRoles: ["admin"] }
+);
+
+export const PATCH = withAuthDev(
+  async (request: Request, _user: AuthenticatedUser) => {
+    try {
+      const body = await request.json();
+      const { settings: newSettings } = body;
+
+      const settings = updateSettings(newSettings);
+      return NextResponse.json(settings);
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+  { allowedRoles: ["admin"] }
+);

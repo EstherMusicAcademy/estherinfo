@@ -27,7 +27,7 @@ type WorkLog = {
 type Student = { id: string; name: string; birthYear: number; major?: string };
 
 export default function WorkLogPage() {
-  const { role, teacherId, teacherName } = useRole();
+  const { role, teacherId } = useRole();
   const [workLogs, setWorkLogs] = useState<WorkLog[]>([]);
   const [myStudents, setMyStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +49,7 @@ export default function WorkLogPage() {
   useEffect(() => {
     if (role !== "teacher" && role !== "admin" && role !== "staff") return;
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, currentMonth]);
 
   async function fetchData() {
@@ -63,7 +64,8 @@ export default function WorkLogPage() {
       ]);
 
       const workLogsData = await workLogsRes.json();
-      setWorkLogs(workLogsData?.workLogs || workLogsData || []);
+      const logs = workLogsData?.workLogs || workLogsData || [];
+      setWorkLogs(Array.isArray(logs) ? logs : []);
 
       if (role === "teacher" || role === "admin") {
         const studentsData = await studentsRes.json();

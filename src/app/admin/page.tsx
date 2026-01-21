@@ -267,7 +267,7 @@ export default function AdminPage() {
         <div className="mx-auto max-w-2xl rounded-2xl border border-border bg-surface p-8">
           <h1 className="text-2xl font-semibold">접근 불가</h1>
           <p className="mt-2 text-sm text-muted">관리자 모드에서만 관리자 대시보드를 사용할 수 있습니다.</p>
-          <p className="mt-2 text-sm text-muted">오른쪽 하단 "모드"에서 관리자로 전환하세요.</p>
+          <p className="mt-2 text-sm text-muted">오른쪽 하단 &quot;모드&quot;에서 관리자로 전환하세요.</p>
         </div>
       </main>
     );

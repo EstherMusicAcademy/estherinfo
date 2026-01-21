@@ -37,6 +37,21 @@ type User = {
   major?: string;
 };
 
+type TeacherResponse = {
+  id: string;
+  displayName?: string;
+  name?: string;
+  major?: string;
+};
+
+type StudentResponse = {
+  id: string;
+  displayName?: string;
+  name?: string;
+  role: string;
+  major?: string;
+};
+
 // 시간 슬롯 (9시 ~ 22시까지, 30분 단위)
 const TIME_SLOTS = Array.from({ length: 26 }, (_, i) => {
   const hour = 9 + Math.floor(i / 2);
@@ -156,18 +171,18 @@ export default function PracticeRoomPage() {
         const teachersData = await responses[3].json();
         const studentsData = await responses[4].json();
         
-        const teachers = (teachersData.teachers || teachersData || []).map((t: any) => ({
+        const teachers = ((teachersData.teachers || teachersData || []) as TeacherResponse[]).map((t) => ({
           id: t.id,
-          displayName: t.displayName || t.name,
+          displayName: t.displayName || t.name || "",
           role: "teacher",
           major: t.major,
         }));
         
-        const students = (studentsData.students || studentsData || [])
-          .filter((s: any) => s.role === "student" || s.role === "student_vip")
-          .map((s: any) => ({
+        const students = ((studentsData.students || studentsData || []) as StudentResponse[])
+          .filter((s) => s.role === "student" || s.role === "student_vip")
+          .map((s) => ({
             id: s.id,
-            displayName: s.displayName || s.name,
+            displayName: s.displayName || s.name || "",
             role: s.role,
             major: s.major,
           }));
@@ -187,6 +202,7 @@ export default function PracticeRoomPage() {
     setSelectedUserId("");
     setSelectedUserName("");
     setUserSearchQuery("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
 
   // 검색된 유저 목록

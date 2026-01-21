@@ -120,6 +120,7 @@ export default function StudentManagementPage() {
   useEffect(() => {
     if (role !== "teacher" && role !== "admin") return;
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, teacherId]);
 
   async function fetchData() {
@@ -141,7 +142,8 @@ export default function StudentManagementPage() {
       const studentsData = await responses[0].json();
       const subjectsData = await responses[1].json();
       
-      setStudents(studentsData?.students || studentsData || []);
+      const studList = studentsData?.students || studentsData || [];
+      setStudents(Array.isArray(studList) ? studList : []);
       setSubjects(Array.isArray(subjectsData) ? subjectsData : (subjectsData?.subjects || []));
       
       if (role === "admin") {
@@ -457,19 +459,26 @@ export default function StudentManagementPage() {
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex max-w-7xl">
         {/* Student List Sidebar */}
-        <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-80 flex-shrink-0 overflow-y-auto border-r border-border bg-surface p-6 lg:block">
-          <h2 className="mb-4 text-lg font-semibold">
-            학생 목록 <span className="text-sm font-normal text-muted">({filteredStudents.length}명)</span>
+        <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-80 flex-shrink-0 overflow-y-auto border-r border-border bg-gradient-to-b from-surface to-background p-6 lg:block">
+          <h2 className="mb-4 text-lg font-semibold flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            학생 목록
+            <span className="text-sm font-normal text-muted bg-primary/10 px-2 py-0.5 rounded-full">{filteredStudents.length}명</span>
           </h2>
-          
+
           {/* 검색 입력 */}
-          <div className="mb-4">
+          <div className="mb-4 relative">
+            <svg xmlns="http://www.w3.org/2000/svg" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="학생 이름 또는 전공 검색..."
-              className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm outline-none focus:ring-2 focus:ring-[color:var(--primary)]"
+              className="w-full h-10 pl-10 pr-3 rounded-lg border border-border bg-background text-sm outline-none transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </div>
           
@@ -483,18 +492,18 @@ export default function StudentManagementPage() {
                   <button
                     key={student.id}
                     onClick={() => selectStudent(student)}
-                    className={`w-full rounded-lg px-4 py-3 text-left transition-colors ${
+                    className={`group w-full rounded-xl px-4 py-3 text-left transition-all duration-200 ${
                       selectedStudent?.id === student.id
-                        ? "bg-primary text-white"
-                        : "bg-background hover:bg-muted/20"
+                        ? "bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg scale-105"
+                        : "bg-background hover:bg-muted/20 hover:shadow-md hover:scale-102"
                     }`}
                   >
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{student.name}</span>
                       {isSharing && (
                         <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                          selectedStudent?.id === student.id 
-                            ? "bg-white/20 text-white" 
+                          selectedStudent?.id === student.id
+                            ? "bg-white/20 text-white"
                             : "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
                         }`}>
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -504,7 +513,10 @@ export default function StudentManagementPage() {
                         </span>
                       )}
                     </div>
-                    <div className="text-sm opacity-80">
+                    <div className="text-sm opacity-80 flex items-center gap-2 mt-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                      </svg>
                       {student.major || "전공 미정"} · {formatKoreanAge(student.birthYear)}
                     </div>
                   </button>

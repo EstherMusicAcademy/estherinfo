@@ -1,25 +1,24 @@
 import { NextResponse } from "next/server";
 import { createEvaluation } from "@/lib/evaluationStore";
+import { withAuthDev, type AuthenticatedUser } from "@/lib/apiAuth";
+import { handleApiError, ApiError } from "@/lib/apiError";
+import { createEvaluationSchema } from "@/lib/schemas";
 
-export async function POST(req: Request) {
-  try {
-    const body = (await req.json()) as {
-      studentId?: string;
-      subjectId?: string;
-      teacherId?: string;
-      evalDate?: string;
-      content?: string;
-    };
-    const evaluation = createEvaluation({
-      studentId: body.studentId ?? "",
-      subjectId: body.subjectId ?? "",
-      teacherId: body.teacherId ?? "",
-      evalDate: body.evalDate ?? "",
-      content: body.content ?? "",
-    });
-    return NextResponse.json({ evaluation }, { status: 201 });
-  } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : "요청이 실패했습니다." }, { status: 400 });
-  }
-}
+export const POST = withAuthDev(
+  async (req: Request, _user: AuthenticatedUser) => {
+    try {
+      const body = await req.json();
+      const parsed = createEvaluationSchema.safeParse(body);
 
+      if (!parsed.success) {
+        throw ApiError.validation(parsed.error.issues[0]?.message || "입력값이 올바르지 않습니다.");
+      }
+
+      const evaluation = createEvaluation(parsed.data);
+      return NextResponse.json({ evaluation }, { status: 201 });
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+  { allowedRoles: ["admin", "teacher"] }
+);

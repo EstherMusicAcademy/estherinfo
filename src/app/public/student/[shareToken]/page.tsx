@@ -3,16 +3,72 @@
 import { useState, useEffect, use } from "react";
 import { useRole } from "@/components/role/RoleProvider";
 import { IconVideo, IconWarning } from "@/components/icons/UiIcons";
+import { extractYouTubeId } from "@/lib/youtube";
 
 type Props = {
   params: Promise<{ shareToken: string }>;
+};
+
+type MockTestData = {
+  id: string;
+  youtubeUrl: string;
+  title: string;
+  createdAt: string;
+  groupId?: string;
+  groupYear?: number;
+  groupSession?: number;
+  groupMajor?: string;
+  groupExamDate?: string;
+  songTitle?: string;
+  artist?: string;
+};
+
+type MockTestGroup = {
+  id: string;
+  year: number;
+  session: number;
+  major: string;
+  examDate?: string;
+};
+
+type TeacherData = {
+  id: string;
+  displayName: string;
+  subjectType?: string;
+  subjectLabel?: string;
+};
+
+type EvaluationData = {
+  id: string;
+  evalDate: string;
+  subjectLabel: string;
+  teacherName: string;
+  content: string;
+};
+
+type StudentPageData = {
+  student: {
+    id: string;
+    name: string;
+    major?: string;
+  };
+  teachers: TeacherData[];
+  evaluations: EvaluationData[];
+  mockTests: MockTestData[];
+  lessonSubject?: string;
+  expiresAt?: string;
+  error?: string;
+};
+
+type ErrorData = {
+  error: string;
 };
 
 export default function PublicStudentPage({ params }: Props) {
   const { shareToken } = use(params);
   const { role, teacherId } = useRole();
   const [activeTab, setActiveTab] = useState<"mock" | "eval">("eval");
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<StudentPageData | ErrorData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isTeacherOfStudent, setIsTeacherOfStudent] = useState(false);
   
@@ -34,8 +90,8 @@ export default function PublicStudentPage({ params }: Props) {
         const mockTestsData = await mockTestsRes.json();
         
         // 그룹 정보를 모의고사에 추가
-        const mockTestsWithGroup = (mockTestsData.mockTests || []).map((mt: any) => {
-          const group = (mockTestsData.groups || []).find((g: any) => g.id === mt.groupId);
+        const mockTestsWithGroup = ((mockTestsData.mockTests || []) as MockTestData[]).map((mt) => {
+          const group = ((mockTestsData.groups || []) as MockTestGroup[]).find((g) => g.id === mt.groupId);
           return {
             ...mt,
             groupYear: group?.year,
@@ -52,7 +108,7 @@ export default function PublicStudentPage({ params }: Props) {
         
         // 선생님이 이 학생을 가르치는지 확인
         if (role === "teacher" && teacherId) {
-          const isTeacher = result.teachers.some((t: any) => t.id === teacherId);
+          const isTeacher = result.teachers.some((t: TeacherData) => t.id === teacherId);
           setIsTeacherOfStudent(isTeacher);
         } else if (role === "admin") {
           setIsTeacherOfStudent(true); // 관리자는 항상 작성 가능
@@ -69,6 +125,11 @@ export default function PublicStudentPage({ params }: Props) {
   const handleSubmitEvaluation = async () => {
     if (!evalContent.trim() || !evalSubject) {
       alert("평가 내용과 과목을 입력해주세요.");
+      return;
+    }
+
+    if (!data || !("student" in data)) {
+      alert("학생 정보를 불러올 수 없습니다.");
       return;
     }
 
@@ -123,7 +184,7 @@ export default function PublicStudentPage({ params }: Props) {
   return (
     <main className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-6 lg:py-12">
       <div className="mx-auto max-w-4xl">
-        {"error" in data ? (
+        {data && "error" in data ? (
           <div className="rounded-3xl border border-border bg-surface p-8 shadow-sm">
             <h1 className="text-2xl font-bold tracking-tight">에스더 피드백 공유</h1>
             <div className="mt-4 rounded-2xl border-2 border-red-400 bg-red-100 p-4 dark:border-red-800 dark:bg-red-950/30">
@@ -138,7 +199,7 @@ export default function PublicStudentPage({ params }: Props) {
                 </li>
                 <li className="flex gap-2">
                   <span className="text-[color:var(--primary)]">•</span>
-                  <span>관리자 화면의 "학생 관리 → 학부모 공개 링크(토큰)"에서 새 링크를 발급하세요.</span>
+                  <span>관리자 화면의 &quot;학생 관리 → 학부모 공개 링크(토큰)&quot;에서 새 링크를 발급하세요.</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-[color:var(--primary)]">•</span>
@@ -170,19 +231,19 @@ export default function PublicStudentPage({ params }: Props) {
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <div className="group">
                   <div className="text-xs font-medium uppercase tracking-wider text-muted">학생 이름</div>
-                  <div className="mt-1 text-lg font-semibold">{data.student.name}</div>
+                  <div className="mt-1 text-lg font-semibold">{(data as StudentPageData).student.name}</div>
                 </div>
                 <div className="group">
                   <div className="text-xs font-medium uppercase tracking-wider text-muted">전공</div>
-                  <div className="mt-1 text-lg font-semibold">{data.student.major ?? "-"}</div>
+                  <div className="mt-1 text-lg font-semibold">{(data as StudentPageData).student.major ?? "-"}</div>
                 </div>
                 <div className="group">
                   <div className="text-xs font-medium uppercase tracking-wider text-muted">레슨 과목</div>
-                  <div className="mt-1 text-lg font-semibold">{data.lessonSubject ?? "-"}</div>
+                  <div className="mt-1 text-lg font-semibold">{(data as StudentPageData).lessonSubject ?? "-"}</div>
                 </div>
-                {data.teachers.length > 0 && (
+                {(data as StudentPageData).teachers.length > 0 && (
                   <div className="col-span-full grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {data.teachers.map((t: any) => (
+                    {(data as StudentPageData).teachers.map((t) => (
                       <div key={t.id} className="group rounded-xl bg-muted/10 px-4 py-3">
                         <div className="text-xs font-medium uppercase tracking-wider text-muted">
                           {t.subjectType === "major" ? "전공수업" : t.subjectType === "theory" ? "이론수업" : "담당"} 선생님
@@ -201,14 +262,14 @@ export default function PublicStudentPage({ params }: Props) {
             </header>
 
             {/* 만료일 안내 */}
-            {data.expiresAt && (
+            {(data as StudentPageData).expiresAt && (
               <div className="rounded-2xl border-2 border-amber-500 bg-amber-100 p-4 dark:border-amber-700 dark:bg-amber-950/30">
                 <div className="flex items-center gap-3">
                   <span className="text-xl">🔒</span>
                   <div>
                     <p className="font-semibold text-amber-900 dark:text-amber-100">보안 안내</p>
                     <p className="text-sm text-amber-800 dark:text-amber-200">
-                      본 페이지는 <strong>{new Date(data.expiresAt).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}</strong>까지 열람 가능합니다.
+                      본 페이지는 <strong>{new Date((data as StudentPageData).expiresAt!).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}</strong>까지 열람 가능합니다.
                     </p>
                   </div>
                 </div>
@@ -325,7 +386,7 @@ export default function PublicStudentPage({ params }: Props) {
                     </div>
                   </div>
 
-                  {data.mockTests.length === 0 ? (
+                  {(data as StudentPageData).mockTests.length === 0 ? (
                     <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-background/50 py-12">
                       <div className="text-4xl opacity-30">
                         <IconVideo className="h-10 w-10" />
@@ -334,8 +395,7 @@ export default function PublicStudentPage({ params }: Props) {
                     </div>
                   ) : (
                     <div className="mt-6 space-y-6">
-                      {data.mockTests.map((m: any) => {
-                        const { extractYouTubeId } = require("@/lib/youtube");
+                      {(data as StudentPageData).mockTests.map((m) => {
                         const id = extractYouTubeId(m.youtubeUrl);
                         return (
                           <div
@@ -402,14 +462,14 @@ export default function PublicStudentPage({ params }: Props) {
               <section className="animate-in fade-in slide-in-from-bottom-4 duration-300">
                 <div className="rounded-3xl border border-border bg-surface p-6 shadow-sm sm:p-8">
                   <h2 className="text-xl font-bold">학생 평가차트</h2>
-                  {data.evaluations.length === 0 ? (
+                  {(data as StudentPageData).evaluations.length === 0 ? (
                     <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-background/50 py-12">
                       <div className="text-4xl opacity-30">📝</div>
                       <p className="mt-4 text-sm font-medium text-muted">등록된 평가가 없습니다</p>
                     </div>
                   ) : (
                     <div className="mt-6 space-y-4">
-                      {data.evaluations.map((e: any) => (
+                      {(data as StudentPageData).evaluations.map((e) => (
                         <div
                           key={e.id}
                           className="group rounded-2xl border border-border bg-background p-5 transition-all hover:border-[color:var(--primary)] hover:shadow-lg"

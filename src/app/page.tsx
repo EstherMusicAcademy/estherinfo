@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useRole } from "@/components/role/RoleProvider";
-import { useAuth } from "@/components/auth/AuthProvider";
+import { useSupabaseAuth as useAuth } from "@/components/auth/SupabaseAuthProvider";
 import { IconCalendar, IconFileList, IconVideo } from "@/components/icons/UiIcons";
 import Link from "next/link";
 import Image from "next/image";
@@ -30,12 +30,12 @@ export default function Home() {
   }
   
   return (
-    <main className="min-h-screen bg-gradient-to-b from-background via-surface to-background px-6 py-16 text-foreground">
+    <main className="min-h-screen bg-gradient-to-br from-background via-surface to-background px-6 py-16 text-foreground">
       <div className="mx-auto max-w-6xl">
         {/* Hero Section */}
-        <div className="rounded-3xl border border-border bg-surface p-10 shadow-lg">
+        <div className="group rounded-3xl border border-border bg-surface p-10 shadow-lg transition-all duration-300 hover:shadow-2xl hover:border-primary/30">
           <div className="flex items-center gap-6">
-            <div className="relative h-24 w-40 overflow-hidden rounded-lg">
+            <div className="relative h-24 w-40 overflow-hidden rounded-lg shadow-md transition-transform duration-300 group-hover:scale-105">
               <Image
                 src="/esther-logo-basic.png"
                 alt="에스더실용음악학원"
@@ -45,8 +45,11 @@ export default function Home() {
               />
             </div>
             <div className="flex-1">
-              <h1 className="text-4xl font-bold tracking-tight">에스더 실용음악학원</h1>
-              <p className="mt-2 text-lg text-muted">관리 시스템</p>
+              <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">에스더 실용음악학원</h1>
+              <p className="mt-2 text-lg text-muted flex items-center gap-2">
+                관리 시스템
+                <span className="inline-block h-2 w-2 rounded-full bg-primary animate-pulse"></span>
+              </p>
             </div>
           </div>
 
@@ -147,35 +150,38 @@ export default function Home() {
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Link
               href="/guidebook"
-              className="group rounded-2xl border border-border bg-background p-6 transition-all hover:border-primary hover:shadow-md"
+              className="group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-background to-surface p-6 transition-all duration-300 hover:border-primary hover:shadow-xl hover:-translate-y-1"
             >
-              <div className="text-2xl font-semibold group-hover:text-primary">
+              <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-primary/5 transition-transform duration-300 group-hover:scale-150"></div>
+              <div className="relative text-3xl font-semibold text-primary transition-transform duration-300 group-hover:scale-110">
                 <IconFileList />
               </div>
-              <h3 className="mt-2 font-semibold">가이드북</h3>
-              <p className="mt-1 text-sm text-muted">학원 운영 가이드 및 매뉴얼</p>
+              <h3 className="relative mt-3 font-semibold text-lg">가이드북</h3>
+              <p className="relative mt-1 text-sm text-muted">학원 운영 가이드 및 매뉴얼</p>
             </Link>
 
             <Link
               href="/admin/mock-tests"
-              className="group rounded-2xl border border-border bg-background p-6 transition-all hover:border-primary hover:shadow-md"
+              className="group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-background to-surface p-6 transition-all duration-300 hover:border-primary hover:shadow-xl hover:-translate-y-1"
             >
-              <div className="text-2xl font-semibold group-hover:text-primary">
+              <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-primary/5 transition-transform duration-300 group-hover:scale-150"></div>
+              <div className="relative text-3xl font-semibold text-primary transition-transform duration-300 group-hover:scale-110">
                 <IconVideo />
               </div>
-              <h3 className="mt-2 font-semibold">모의고사</h3>
-              <p className="mt-1 text-sm text-muted">모의고사 영상 관리</p>
+              <h3 className="relative mt-3 font-semibold text-lg">모의고사</h3>
+              <p className="relative mt-1 text-sm text-muted">모의고사 영상 관리</p>
             </Link>
 
             <Link
               href="/teacher/work-log"
-              className="group rounded-2xl border border-border bg-background p-6 transition-all hover:border-primary hover:shadow-md"
+              className="group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-background to-surface p-6 transition-all duration-300 hover:border-primary hover:shadow-xl hover:-translate-y-1"
             >
-              <div className="text-2xl font-semibold group-hover:text-primary">
+              <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-primary/5 transition-transform duration-300 group-hover:scale-150"></div>
+              <div className="relative text-3xl font-semibold text-primary transition-transform duration-300 group-hover:scale-110">
                 <IconCalendar />
               </div>
-              <h3 className="mt-2 font-semibold">업무일지</h3>
-              <p className="mt-1 text-sm text-muted">레슨 일지 및 출석 관리</p>
+              <h3 className="relative mt-3 font-semibold text-lg">업무일지</h3>
+              <p className="relative mt-1 text-sm text-muted">레슨 일지 및 출석 관리</p>
             </Link>
           </div>
         </div>

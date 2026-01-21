@@ -35,9 +35,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const savedRaw = localStorage.getItem(STORAGE_KEY);
-    // 요구사항: 선택지는 라이트/다크만. 저장값도 light/dark만 저장. 없으면 system.
     const pref: ThemePreference = savedRaw === "light" || savedRaw === "dark" ? savedRaw : "system";
-    setPreferenceState(pref);
+    setPreferenceState(pref); // eslint-disable-line react-hooks/set-state-in-effect
     applyPreference(pref);
     setMode(pref === "system" ? getSystemMode() : pref);
   }, []);

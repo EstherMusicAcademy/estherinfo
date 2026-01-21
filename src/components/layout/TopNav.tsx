@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useRole } from "@/components/role/RoleProvider";
-import { useAuth } from "@/components/auth/AuthProvider";
+import { useSupabaseAuth as useAuth } from "@/components/auth/SupabaseAuthProvider";
 import { IconLogout } from "@/components/icons/UiIcons";
 
 function NavLink({ href, label }: { href: string; label: string }) {
@@ -14,11 +14,16 @@ function NavLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className={`inline-flex h-10 items-center rounded-lg px-3 text-sm font-medium transition-colors ${
-        active ? "bg-background text-foreground" : "text-muted hover:bg-background hover:text-foreground"
+      className={`relative inline-flex h-10 items-center rounded-lg px-3 text-sm font-medium transition-all duration-200 ${
+        active
+          ? "bg-primary text-white shadow-md"
+          : "text-muted hover:bg-background hover:text-foreground hover:scale-105"
       }`}
     >
       {label}
+      {active && (
+        <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-8 bg-white rounded-full"></span>
+      )}
     </Link>
   );
 }
@@ -76,7 +81,7 @@ export function TopNav() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-surface/90 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-border bg-surface/95 backdrop-blur-md shadow-sm transition-all duration-300">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-background">

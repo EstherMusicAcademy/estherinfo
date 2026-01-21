@@ -1,47 +1,46 @@
 import { mockTestStore } from "@/lib/mockTestStore";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { withAuthDev, type AuthenticatedUser } from "@/lib/apiAuth";
+import { handleApiError, ApiError } from "@/lib/apiError";
+import { createMockTestGroupSchema } from "@/lib/schemas";
 
-// GET: 그룹 목록 조회
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const year = searchParams.get("year");
-  const session = searchParams.get("session");
-  const major = searchParams.get("major") || undefined;
+export const GET = withAuthDev(
+  async (req: Request) => {
+    try {
+      const { searchParams } = new URL(req.url);
+      const year = searchParams.get("year");
+      const session = searchParams.get("session");
+      const major = searchParams.get("major") || undefined;
 
-  const groups = mockTestStore.listGroups({
-    year: year ? parseInt(year) : undefined,
-    session: session ? parseInt(session) : undefined,
-    major,
-  });
+      const groups = mockTestStore.listGroups({
+        year: year ? parseInt(year) : undefined,
+        session: session ? parseInt(session) : undefined,
+        major,
+      });
 
-  return NextResponse.json(groups);
-}
-
-// POST: 새 그룹 생성
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const { year, session, major, examDate } = body;
-
-    if (!year || !session || !major) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      return NextResponse.json(groups);
+    } catch (error) {
+      return handleApiError(error);
     }
+  },
+  { allowedRoles: ["admin", "teacher"] }
+);
 
-    const newGroup = mockTestStore.createGroup({ 
-      year, 
-      session, 
-      major,
-      examDate: examDate || undefined,
-    });
-    return NextResponse.json(newGroup, { status: 201 });
-  } catch (error) {
-    console.error("Error creating group:", error);
-    return NextResponse.json(
-      { error: "Failed to create group" },
-      { status: 500 }
-    );
-  }
-}
+export const POST = withAuthDev(
+  async (req: Request, _user: AuthenticatedUser) => {
+    try {
+      const body = await req.json();
+      const parsed = createMockTestGroupSchema.safeParse(body);
+
+      if (!parsed.success) {
+        throw ApiError.validation(parsed.error.issues[0]?.message || "Missing required fields");
+      }
+
+      const newGroup = mockTestStore.createGroup(parsed.data);
+      return NextResponse.json(newGroup, { status: 201 });
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+  { allowedRoles: ["admin"] }
+);
